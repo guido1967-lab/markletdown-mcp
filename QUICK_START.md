@@ -13,62 +13,54 @@ Verify:
 pandoc --version
 ```
 
-## 2️⃣ Install Python Dependencies
+> ⚠️ Requires **Python 3.10+** (the `mcp` library does not run on the macOS
+> system Python 3.9). Install a recent Python with `brew install python@3.12`.
+> For image OCR also run `brew install tesseract`.
 
-```bash
-pip3 install openpyxl python-pptx pillow pytesseract
-```
-
-Or use requirements.txt:
-```bash
-pip3 install -r requirements.txt
-```
-
-## 3️⃣ Clone or Download the Repository
+## 2️⃣ Clone the Repository
 
 ```bash
 git clone https://github.com/guido1967-lab/markletdown-mcp.git
 cd markletdown-mcp
 ```
 
-Get your script path:
+## 3️⃣ Create a venv and install dependencies
+
 ```bash
-pwd
+python3.12 -m venv .venv
+./.venv/bin/pip install -r requirements.txt
 ```
 
-**Copy this path!** Example: `/Users/john/Projects/markletdown-mcp`
+Get the absolute paths you'll need for the config:
+```bash
+echo "$(pwd)/.venv/bin/python"          # command
+echo "$(pwd)/server/file_to_markdown_mcp.py"   # args
+```
 
 ## 4️⃣ Configure Claude Desktop
 
-Open the config file:
+⚠️ The config file lives here (NOT `~/.claude-desktop/`):
 
 ```bash
-nano ~/.claude-desktop/config.json
+open "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 ```
 
-**If file doesn't exist**, create it first:
-
-```bash
-mkdir -p ~/.claude-desktop
-```
-
-**Then add this content** (replace `/YOUR/PATH` with your actual path):
+Add the `file-to-markdown` entry to `mcpServers` (replace `/YOUR/PATH`
+with the paths printed in step 3). Keep any servers already present:
 
 ```json
 {
   "mcpServers": {
     "file-to-markdown": {
-      "command": "python3",
-      "args": ["/YOUR/PATH/file_to_markdown_mcp.py"]
+      "command": "/YOUR/PATH/markletdown-mcp/.venv/bin/python",
+      "args": ["/YOUR/PATH/markletdown-mcp/server/file_to_markdown_mcp.py"]
     }
   }
 }
 ```
 
-**To save in nano:**
-- Press `Ctrl + X`
-- Press `Y`
-- Press `Enter`
+> Tip: use the venv's Python as `command` so the dependencies are always
+> found, regardless of your system Python.
 
 ## 5️⃣ Restart Claude Desktop
 
@@ -95,15 +87,16 @@ Claude will automatically convert it to Markdown! 🎉
 | Problem | Fix |
 |---------|-----|
 | `pandoc: command not found` | Run: `brew install pandoc` |
-| `ModuleNotFoundError` | Run: `pip3 install -r requirements.txt` |
-| MCP not showing | 1. Check config path exists <br> 2. Use absolute path (not relative) <br> 3. Restart Claude Desktop |
-| Can't find file path | Open Terminal, go to folder, run `pwd` |
+| `ModuleNotFoundError` / `Missing dependency 'mcp'` | Run: `./.venv/bin/pip install -r requirements.txt` |
+| `mcp` won't install | System Python is too old. Use Python 3.10+: `brew install python@3.12` and recreate the venv |
+| MCP not showing | 1. Use the **real** config: `~/Library/Application Support/Claude/claude_desktop_config.json` <br> 2. Use absolute paths to the venv Python and script <br> 3. Fully quit & reopen Claude Desktop |
+| Image OCR empty | Run: `brew install tesseract` |
 
 ## 📍 Important File Locations
 
 | What | Where |
 |------|-------|
-| Config file | `~/.claude-desktop/config.json` |
+| Config file | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 | Script file | Wherever you cloned it (get path with `pwd`) |
 | Repo URL | https://github.com/guido1967-lab/markletdown-mcp |
 

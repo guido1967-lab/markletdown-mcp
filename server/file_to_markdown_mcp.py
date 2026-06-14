@@ -388,21 +388,71 @@ class FileToMarkdownConverter:
             }
 
 
-def main():
-    """Main entry point"""
+def run_cli():
+    """Run as a one-shot CLI converter (debugging / manual use)."""
     converter = FileToMarkdownConverter()
-    
-    if len(sys.argv) < 2:
-        print("Usage: python3 file_to_markdown_mcp.py <file_path>")
+
+    if len(sys.argv) < 3:
+        print("Usage: python3 file_to_markdown_mcp.py --cli <file_path>")
         print("\nSupported formats:")
         for fmt, desc in converter.SUPPORTED_FORMATS.items():
             print(f"  {fmt}: {desc}")
         sys.exit(1)
-    
-    file_path = sys.argv[1]
-    result = converter.convert_file(file_path)
-    
+
+    result = converter.convert_file(sys.argv[2])
     print(json.dumps(result, indent=2))
+
+
+def run_mcp_server():
+    """Run as an MCP server over stdio (for Claude Desktop)."""
+    try:
+        from mcp.server.fastmcp import FastMCP
+    except ImportError:
+        sys.stderr.write(
+            "Missing dependency 'mcp'. Install it with:\n"
+            "  pip3 install mcp\n"
+        )
+        sys.exit(1)
+
+    converter = FileToMarkdownConverter()
+    mcp = FastMCP("file-to-markdown")
+
+    @mcp.tool()
+    def convert_file_to_markdown(file_path: str) -> str:
+        """Convert a local file to Markdown.
+
+        Supports PDF, Word (.docx/.doc), Excel (.xlsx/.xls), PowerPoint
+        (.pptx/.ppt), images (with OCR), CSV, JSON, HTML and plain text.
+
+        Args:
+            file_path: Absolute path to the file to convert.
+
+        Returns:
+            The Markdown content on success, or an error message prefixed
+            with 'ERROR:'.
+        """
+        result = converter.convert_file(file_path)
+        if result['status'] == 'success':
+            return result['markdown']
+        return f"ERROR: {result['message']}"
+
+    @mcp.tool()
+    def list_supported_formats() -> str:
+        """List the file formats this server can convert to Markdown."""
+        lines = ["Supported formats:"]
+        for fmt, desc in converter.SUPPORTED_FORMATS.items():
+            lines.append(f"  {fmt}: {desc}")
+        return "\n".join(lines)
+
+    mcp.run()
+
+
+def main():
+    """Entry point. Defaults to MCP server mode; pass --cli for one-shot use."""
+    if len(sys.argv) > 1 and sys.argv[1] == '--cli':
+        run_cli()
+    else:
+        run_mcp_server()
 
 
 if __name__ == '__main__':
