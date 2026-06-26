@@ -1,9 +1,9 @@
 <#
-  install.ps1 — Setup completo su Windows.
+  install.ps1 - Setup completo su Windows.
   Crea il venv, installa markitdown e aggiunge la voce "Converti in Markdown"
   al menu tasto-destro di file e cartelle. Percorsi ricavati automaticamente.
 
-  Esegui (PowerShell, NON serve admin — usa HKCU):
+  Esegui (PowerShell, NON serve admin - usa HKCU):
     powershell -ExecutionPolicy Bypass -File .\install.ps1
 #>
 [CmdletBinding()]
@@ -12,7 +12,7 @@ param([switch]$Uninstall)
 $ErrorActionPreference = 'Stop'
 
 # Cartella dello script. Se lanciato come file -> $PSScriptRoot; se il contenuto
-# viene incollato nel terminale -> $PSScriptRoot è vuoto, usa la cartella corrente.
+# viene incollato nel terminale -> $PSScriptRoot e vuoto, usa la cartella corrente.
 $ScriptDir  = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 if (-not (Test-Path (Join-Path $ScriptDir 'convert.ps1'))) {
     Write-Host "X Non trovo convert.ps1 in: $ScriptDir"
@@ -42,7 +42,7 @@ if ($Uninstall) {
     return
 }
 
-Write-Host "Installazione MarkltDown — repo: $RepoRoot`n"
+Write-Host "Installazione MarkltDown - repo: $RepoRoot`n"
 
 # 1) Trova Python >= 3.10. Ritorna un array-comando, es. @('py','-3') o @('python').
 function Find-Python {
@@ -80,7 +80,7 @@ if (-not (Test-Path $markitdown)) {
     & (Join-Path $Venv 'Scripts\pip.exe') install --quiet -r (Join-Path $RepoRoot 'requirements.txt')
     & (Join-Path $Venv 'Scripts\pip.exe') install --quiet 'markitdown[all]'
 } else {
-    Write-Host "OK Venv già presente"
+    Write-Host "OK Venv gia presente"
 }
 if (-not (Test-Path $markitdown)) { Write-Host "X Installazione markitdown fallita"; return }
 Write-Host "OK markitdown pronto"
@@ -106,6 +106,6 @@ foreach ($base in @($RegFile, $RegDir)) {
 }
 
 Write-Host "`nFatto!"
-Write-Host "  • File Explorer: tasto destro su file/cartelle -> Converti in Markdown"
-Write-Host "  • Oppure doppio click su convert.bat"
+Write-Host "  - File Explorer: tasto destro su file/cartelle -> Converti in Markdown"
+Write-Host "  - Oppure doppio click su convert.bat"
 Write-Host "  (Per rimuovere: .\install.ps1 -Uninstall)"

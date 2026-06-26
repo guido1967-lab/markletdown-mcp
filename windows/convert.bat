@@ -1,5 +1,5 @@
 @echo off
-REM convert.bat — Doppio click: converte la cartella di default (o i file/cartelle
+REM convert.bat - Doppio click: converte la cartella di default (o i file/cartelle
 REM trascinati sopra questo .bat). Mostra l'output e resta aperto a fine lavoro.
 setlocal
 set "HERE=%~dp0"

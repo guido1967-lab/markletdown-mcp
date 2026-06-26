@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM  Converti in Markdown — Installazione Windows
+REM  Converti in Markdown - Installazione Windows
 REM  DOPPIO CLICK su questo file per installare tutto.
 REM  (I file .ps1 non si avviano col doppio click: ci pensa questo.)
 REM ============================================================

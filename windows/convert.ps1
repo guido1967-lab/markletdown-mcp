@@ -1,5 +1,5 @@
 <#
-  convert.ps1 — Converte file in Markdown (.md) usando markitdown (Microsoft).
+  convert.ps1 - Converte file in Markdown (.md) usando markitdown (Microsoft).
   Obiettivo: ridurre i token. Dai a Claude SOLO i .md generati, mai gli originali.
 
   Uso:
