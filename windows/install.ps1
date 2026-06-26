@@ -44,36 +44,65 @@ if ($Uninstall) {
 
 Write-Host "Installazione MarkltDown - repo: $RepoRoot`n"
 
-# 1) Trova Python >= 3.10. Ritorna un array-comando, es. @('py','-3') o @('python').
+# 1) Trova Python in [3.10 .. 3.13]. markitdown e le sue dipendenze (onnxruntime)
+# spesso NON hanno wheel sulle versioni piu' nuove (3.14+): vanno evitate.
+# Preferisce versioni esplicite via il launcher 'py', poi i generici.
+function Get-PyMinor {
+    param($exe, $pre)
+    try {
+        $v = & $exe @pre -c 'import sys;print(sys.version_info[0]*100+sys.version_info[1])' 2>$null
+        return [int]$v
+    } catch { return 0 }
+}
 function Find-Python {
     $cands = @()
-    if (Get-Command py -ErrorAction SilentlyContinue) { $cands += ,@('py','-3') }
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        foreach ($ver in '3.12','3.11','3.10','3.13') { $cands += ,@('py',"-$ver") }
+        $cands += ,@('py','-3')
+    }
     foreach ($n in 'python','python3') {
         if (Get-Command $n -ErrorAction SilentlyContinue) { $cands += ,@($n) }
     }
+    # Primo passaggio: una versione "buona" (3.10-3.13)
     foreach ($c in $cands) {
-        $exe = $c[0]
         $pre = if ($c.Count -gt 1) { $c[1..($c.Count-1)] } else { @() }
-        try {
-            $v = & $exe @pre -c 'import sys;print(sys.version_info[0]*100+sys.version_info[1])' 2>$null
-            if ([int]$v -ge 310) { return ,$c }
-        } catch {}
+        $m = Get-PyMinor $c[0] $pre
+        if ($m -ge 310 -and $m -le 313) { return ,$c }
+    }
+    # Secondo passaggio: qualsiasi >=3.10 (ma probabilmente troppo nuova)
+    foreach ($c in $cands) {
+        $pre = if ($c.Count -gt 1) { $c[1..($c.Count-1)] } else { @() }
+        if ((Get-PyMinor $c[0] $pre) -ge 310) { return ,$c }
     }
     return $null
 }
 
 $py = Find-Python
 if (-not $py) {
-    Write-Host "X Serve Python 3.10+. Installalo da https://www.python.org/downloads/ (spunta 'Add to PATH')."
+    Write-Host "X Serve Python 3.10-3.13. Installa Python 3.12 da https://www.python.org/downloads/release/python-3128/ (spunta 'Add to PATH')."
     return
 }
 $pyExe = $py[0]
 $pyPre = if ($py.Count -gt 1) { $py[1..($py.Count-1)] } else { @() }
-Write-Host "OK Python: $($py -join ' ')"
+$pyMinor = Get-PyMinor $pyExe $pyPre
+Write-Host "OK Python: $($py -join ' ') (3.$($pyMinor - 300))"
+if ($pyMinor -gt 313) {
+    Write-Host "! ATTENZIONE: Python 3.$($pyMinor - 300) e' molto recente e markitdown potrebbe non installarsi correttamente."
+    Write-Host "  Consigliato: installa Python 3.12 da https://www.python.org/downloads/release/python-3128/ e rilancia."
+}
 
 # 2) Venv + dipendenze (sempre eseguito: idempotente, e ripara venv esistenti rotti)
 $markitdown = Join-Path $Venv 'Scripts\markitdown.exe'
-if (-not (Test-Path (Join-Path $Venv 'Scripts\python.exe'))) {
+$venvPy = Join-Path $Venv 'Scripts\python.exe'
+# Se il venv esiste ma e' su una versione di Python sbagliata (es. 3.14), ricrealo.
+if (Test-Path $venvPy) {
+    $venvMinor = Get-PyMinor $venvPy @()
+    if ($venvMinor -lt 310 -or $venvMinor -gt 313) {
+        Write-Host "Venv esistente su Python 3.$($venvMinor - 300): lo ricreo con $($py -join ' ')..."
+        Remove-Item $Venv -Recurse -Force
+    }
+}
+if (-not (Test-Path $venvPy)) {
     Write-Host "Creo il venv..."
     & $pyExe @pyPre -m venv $Venv
 } else {
