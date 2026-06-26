@@ -11,10 +11,19 @@ param([switch]$Uninstall)
 
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot   = Split-Path -Parent $PSScriptRoot
+# Cartella dello script. Se lanciato come file -> $PSScriptRoot; se il contenuto
+# viene incollato nel terminale -> $PSScriptRoot è vuoto, usa la cartella corrente.
+$ScriptDir  = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+if (-not (Test-Path (Join-Path $ScriptDir 'convert.ps1'))) {
+    Write-Host "X Non trovo convert.ps1 in: $ScriptDir"
+    Write-Host "  Esegui questo script DALLA cartella 'windows' del progetto, oppure"
+    Write-Host "  meglio: powershell -ExecutionPolicy Bypass -File .\install.ps1"
+    return
+}
+$RepoRoot   = Split-Path -Parent $ScriptDir
 $Venv       = Join-Path $RepoRoot '.venv'
-$ConvertPs1 = Join-Path $PSScriptRoot 'convert.ps1'
-$IconPath   = Join-Path $PSScriptRoot 'icon\AppIcon.ico'
+$ConvertPs1 = Join-Path $ScriptDir 'convert.ps1'
+$IconPath   = Join-Path $ScriptDir 'icon\AppIcon.ico'
 
 $KeyName  = 'ConvertiInMarkdown'
 $Label    = 'Converti in Markdown'

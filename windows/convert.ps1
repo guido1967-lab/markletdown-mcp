@@ -21,7 +21,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot     = Split-Path -Parent $PSScriptRoot
+$ScriptDir    = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$RepoRoot     = Split-Path -Parent $ScriptDir
 $MarkItDown   = Join-Path $RepoRoot '.venv\Scripts\markitdown.exe'
 $ProjectsRoot = Join-Path $env:USERPROFILE 'solongevity-projects'
 $OutputSubdir = '_markdown'
