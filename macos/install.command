@@ -31,23 +31,21 @@ if [ -z "$PY" ]; then
 fi
 echo "✅ Python: $("$PY" --version) ($PY)"
 
-# 2) Venv + dipendenze
-if [ ! -x "$VENV/bin/markitdown" ]; then
-  echo "📦 Creo il venv e installo le dipendenze (può richiedere qualche minuto)..."
+# 2) Venv + dipendenze (sempre eseguito: idempotente, ripara venv esistenti)
+if [ ! -x "$VENV/bin/python3" ]; then
+  echo "📦 Creo il venv..."
   "$PY" -m venv "$VENV"
-  "$VENV/bin/pip" install --quiet --upgrade pip
-  "$VENV/bin/pip" install --quiet -r "$REPO_ROOT/requirements.txt"
-  "$VENV/bin/pip" install --quiet 'markitdown[all]'
 else
-  echo "✅ Venv già presente"
+  echo "✅ Venv presente, aggiorno le dipendenze..."
 fi
+"$VENV/bin/pip" install --quiet --upgrade pip
+"$VENV/bin/pip" install --quiet -r "$REPO_ROOT/requirements.txt"
+# Solo i formati documentali: niente dipendenze pesanti (audio/azure) che su Python
+# recenti possono mancare di wheel e far ripiegare pip su markitdown 0.0.2.
+"$VENV/bin/pip" install --quiet --upgrade 'markitdown[pdf,docx,pptx,xlsx,xls,outlook]>=0.1.2'
 "$VENV/bin/markitdown" --version >/dev/null && echo "✅ markitdown pronto"
 
-# 3) Pandoc (per PDF/Word/HTML) — avviso se manca
-command -v pandoc >/dev/null 2>&1 || echo "⚠️  pandoc non trovato (consigliato: brew install pandoc)"
-command -v tesseract >/dev/null 2>&1 || echo "⚠️  tesseract non trovato per OCR immagini (brew install tesseract)"
-
-# 4) App sul Desktop (droplet con icona)
+# 3) App sul Desktop (droplet con icona)
 echo "🖥  Creo l'app sul Desktop..."
 TMP_SCPT="$(mktemp -t convert_app).applescript"
 sed "s#^property scriptPath : .*#property scriptPath : \"$CONVERT_CMD\"#" "$SCRIPT_DIR/app.applescript" > "$TMP_SCPT"

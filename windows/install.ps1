@@ -71,26 +71,23 @@ $pyExe = $py[0]
 $pyPre = if ($py.Count -gt 1) { $py[1..($py.Count-1)] } else { @() }
 Write-Host "OK Python: $($py -join ' ')"
 
-# 2) Venv + dipendenze
+# 2) Venv + dipendenze (sempre eseguito: idempotente, e ripara venv esistenti rotti)
 $markitdown = Join-Path $Venv 'Scripts\markitdown.exe'
-if (-not (Test-Path $markitdown)) {
-    Write-Host "Creo il venv e installo le dipendenze (qualche minuto)..."
+if (-not (Test-Path (Join-Path $Venv 'Scripts\python.exe'))) {
+    Write-Host "Creo il venv..."
     & $pyExe @pyPre -m venv $Venv
-    & (Join-Path $Venv 'Scripts\python.exe') -m pip install --quiet --upgrade pip
-    & (Join-Path $Venv 'Scripts\pip.exe') install --quiet -r (Join-Path $RepoRoot 'requirements.txt')
-    & (Join-Path $Venv 'Scripts\pip.exe') install --quiet 'markitdown[all]'
 } else {
-    Write-Host "OK Venv gia presente"
+    Write-Host "OK Venv presente, aggiorno le dipendenze..."
 }
+& (Join-Path $Venv 'Scripts\python.exe') -m pip install --quiet --upgrade pip
+& (Join-Path $Venv 'Scripts\pip.exe') install --quiet -r (Join-Path $RepoRoot 'requirements.txt')
+# Solo i formati documentali (no audio/youtube/azure): evita dipendenze pesanti
+# senza wheel su Python recenti. Il floor >=0.1.2 impedisce il fallback a 0.0.2.
+& (Join-Path $Venv 'Scripts\pip.exe') install --quiet --upgrade 'markitdown[pdf,docx,pptx,xlsx,xls,outlook]>=0.1.2'
 if (-not (Test-Path $markitdown)) { Write-Host "X Installazione markitdown fallita"; return }
 Write-Host "OK markitdown pronto"
 
-# 3) Avviso pandoc (per PDF/Word/HTML)
-if (-not (Get-Command pandoc -ErrorAction SilentlyContinue)) {
-    Write-Host "! pandoc non trovato (consigliato: winget install --id JohnMacFarlane.Pandoc)"
-}
-
-# 4) Voci nel menu tasto-destro (file + cartelle)
+# 3) Voci nel menu tasto-destro (file + cartelle)
 Remove-MenuEntries
 $cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ConvertPs1`" -ShowDialog `"%1`""
 foreach ($base in @($RegFile, $RegDir)) {
