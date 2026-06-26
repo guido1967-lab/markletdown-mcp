@@ -86,12 +86,14 @@ Remove-MenuEntries
 $cmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ConvertPs1`" -ShowDialog `"%1`""
 foreach ($base in @($RegFile, $RegDir)) {
     New-Item -Path $base -Force | Out-Null
-    New-ItemProperty -Path $base -Name '(default)'   -Value $Label    -PropertyType String -Force | Out-Null
+    # Il valore predefinito della chiave (etichetta del menu) si imposta con Set-Item,
+    # NON con New-ItemProperty -Name '(default)' (che crea un valore chiamato "(default)").
+    Set-Item -Path $base -Value $Label
     if (Test-Path $IconPath) {
-        New-ItemProperty -Path $base -Name 'Icon'    -Value $IconPath -PropertyType String -Force | Out-Null
+        New-ItemProperty -Path $base -Name 'Icon' -Value $IconPath -PropertyType String -Force | Out-Null
     }
     New-Item -Path "$base\command" -Force | Out-Null
-    New-ItemProperty -Path "$base\command" -Name '(default)' -Value $cmd -PropertyType String -Force | Out-Null
+    Set-Item -Path "$base\command" -Value $cmd
 }
 
 Write-Host "`nFatto!"
