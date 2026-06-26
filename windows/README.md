@@ -3,10 +3,14 @@
 ## Installazione
 1. Installa **Python 3.10+** da [python.org](https://www.python.org/downloads/) — spunta **"Add Python to PATH"**.
 2. (Consigliato) Pandoc per PDF/Word/HTML: `winget install --id JohnMacFarlane.Pandoc`.
-3. In PowerShell, dentro questa cartella:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\install.ps1
-   ```
+3. **Doppio click su `INSTALLA-WINDOWS.bat`** e attendi il messaggio "Fatto!".
+
+> ⚠️ Non fare doppio click sui file `.ps1`: Windows li *apre* nell'editor, non li
+> esegue. Usa il `.bat` (che invece parte col doppio click). In alternativa, da
+> PowerShell aperto **nella cartella `windows`**:
+> ```powershell
+> powershell -ExecutionPolicy Bypass -File .\install.ps1
+> ```
 
 L'installer crea il virtualenv (`..\.venv`), installa `markitdown[all]` e aggiunge la
 voce **"Converti in Markdown"** al menu tasto-destro di **file** e **cartelle**.
